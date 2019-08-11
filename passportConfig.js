@@ -1,6 +1,7 @@
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const User = require("./models/user");
+const crypto = require("crypto");
 
 passport.serializeUser((user, done) => {
   console.log(`passport.serializeUser`);
@@ -22,11 +23,20 @@ passport.use(
     { usernameField: "email", passwordField: "password" },
     (email, password, done) => {
       console.log("passport.use" + email + password);
-      User.findOne({ email: email, password: password }, (err, user) => {
-        if (err) return done(err);
-        if (!user) return done(null, false);
-        return done(null, user);
-      });
+      User.findOne(
+        {
+          email: email,
+          password: crypto
+            .createHash("sha1")
+            .update(password)
+            .digest("base64")
+        },
+        (err, user) => {
+          if (err) return done(err);
+          if (!user) return done(null, false);
+          return done(null, user);
+        }
+      );
     }
   )
 );

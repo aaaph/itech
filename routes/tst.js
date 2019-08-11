@@ -60,7 +60,10 @@ router.post("/create", (req, res, next) => {
         : User({
             username: req.body.username,
             email: req.body.email,
-            password: hash(req.body.password)
+            password: crypto
+              .createHash("sha1")
+              .update(req.body.password)
+              .digest("base64")
           })
             .save()
             .then(result => {
@@ -80,10 +83,4 @@ router.get("/logout", (req, res, next) => {
   }
 });
 
-const hash = text => {
-  return crypto
-    .createHash("sha1")
-    .update(text)
-    .digest("base64");
-};
 module.exports = router;
