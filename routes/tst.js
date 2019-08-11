@@ -75,7 +75,7 @@ router.post("/create", (req, res, next) => {
     )
     .then(result => res.json(result));
 });
-
+router.put("/update");
 router.get("/logout", (req, res, next) => {
   req.logout();
   if (!req.isAuthenticated()) {
