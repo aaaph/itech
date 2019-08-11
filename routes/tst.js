@@ -53,23 +53,24 @@ router.get("/", (req, res, next) => {
 router.post("/create", (req, res, next) => {
   //need check
   User.findOne({ email: req.body.email })
-    .then(result => {
-      if (result) {
-        res.json({ status: "exist", user: result });
-      } else {
-        const user = {
-          username: req.body.username,
-          email: req.body.email,
-          password: hash(req.body.password)
-        };
-        return User(user).save();
-      }
-    })
-    .then(
-      user => res.json({ status: "success", user: user }),
-      err => res.json({ status: "denied", err: err })
-    );
-  //User.findOne(user).then(result => res.json(result));
+    .then(user => (user ? user : User.findOne({ username: req.body.username })))
+    .then(user =>
+      user
+        ? { status: "exist", user: user }
+        : User({
+            username: req.body.username,
+            email: req.body.email,
+            password: hash(req.body.password)
+          })
+            .save()
+            .then(result => {
+              return { status: "success", user: result };
+            })
+            .catch(err => {
+              return { status: "denied", err: err };
+            })
+    )
+    .then(result => res.json(result));
 });
 
 router.get("/logout", (req, res, next) => {
