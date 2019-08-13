@@ -75,7 +75,31 @@ router.post("/create", (req, res, next) => {
     )
     .then(result => res.json(result));
 });
-router.put("/update");
+router.put(
+  "/update",
+  (req, res, next) => {
+    if (req.isAuthenticated()) next();
+    else {
+      res.json({ status: "not authenticated" });
+    }
+  },
+  (req, res, next) => {
+    User.findByIdAndUpdate(req.session.passport.user, {
+      $set: {
+        email: req.body.email,
+        password: crypto
+          .createHash("sha1")
+          .update(req.body.password)
+          .digest("base64")
+      }
+    })
+      .then(() => User.findById(req.session.passport.user))
+      .then(user => res.json({ status: "success", user: user }))
+      .catch(err => {
+        throw err;
+      }); //res.json({ status: "denied", err: err }));
+  }
+);
 router.get("/logout", (req, res, next) => {
   req.logout();
   if (!req.isAuthenticated()) {
