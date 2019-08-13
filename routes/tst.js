@@ -84,6 +84,7 @@ router.put(
   (req, res, next) => {
     User.findByIdAndUpdate(req.session.passport.user, {
       $set: {
+        username: req.body.username,
         email: req.body.email,
         password: crypto
           .createHash("sha1")
@@ -98,7 +99,21 @@ router.put(
       }); //res.json({ status: "denied", err: err }));
   }
 );
-router.get("/logout", (req, res, next) => {
+router.delete(
+  "/delete",
+  (req, res, next) => {
+    if (req.isAuthenticated()) next();
+    else {
+      res.json({ status: "not authenticated" });
+    }
+  },
+  (req, res, next) => {
+    User.findByIdAndDelete(req.session.passport.user)
+      .then(result => res.json({ status: "success", result: result }))
+      .catch(err => res.json({ status: "denied", err: err }));
+  }
+);
+router.post("/logout", (req, res, next) => {
   req.logout();
   if (!req.isAuthenticated()) {
     res.json({ status: "success" });
