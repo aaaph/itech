@@ -19,10 +19,6 @@ router.post("/create", (req, res, next) => {
   });
 });
 
-router.get("/create", (req, res, next) => {
-  res.render("list/createArticle");
-});
-
 router.get("/", (req, res, next) => {
   Article.find({})
     .then(articles => {

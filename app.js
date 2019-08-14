@@ -6,7 +6,7 @@ require("./config/passportConfig");
 
 const session = require("express-session");
 const MongoStore = require("connect-mongo")(session);
-const mongoose = require("mongoose");
+require("./config/dbConfig");
 
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
@@ -16,19 +16,6 @@ const usersRouter = require("./routes/users");
 const articleRouter = require("./routes/list");
 
 const app = express();
-
-let dev_db_url =
-  "mongodb+srv://Afanasyev:453035asa@products-tutorial-f1brg.mongodb.net/test?retryWrites=true&w=majority";
-//wFKrS9vW2ciPq.F
-const mongoDB = process.env.MONGODB_URI || dev_db_url;
-mongoose.connect(mongoDB, {
-  useNewUrlParser: true,
-  useCreateIndex: true,
-  useFindAndModify: false
-});
-mongoose.Promise = global.Promise;
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 // view engine setup
 
@@ -42,7 +29,7 @@ app.use(
     secret: "my-secret",
     resave: false,
     saveUninitialized: false,
-    store: new MongoStore({ url: dev_db_url }),
+    store: new MongoStore({ url: process.env.DB_URL }),
     cookie: {
       path: "/",
       httpOnly: true,
