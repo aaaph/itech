@@ -1,1 +1,5 @@
+#NPM MODULES
 node_modules
+.npm
+#ENV
+.env
