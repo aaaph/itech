@@ -3,3 +3,8 @@ node_modules
 .npm
 #ENV
 .env
+
+#Logs
+logs
+*.log
+npm-debug.log*

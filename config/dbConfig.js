@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-console.log(typeof process.env.DB_URL);
-const mongoDB = process.env.MONGODB_URI || process.env.DB_URL.toString();
+
+const mongoDB = process.env.MONGODB_URI || process.env.DB_URL;
 mongoose.connect(mongoDB, {
   useNewUrlParser: true,
   useCreateIndex: true,

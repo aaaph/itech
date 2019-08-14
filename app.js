@@ -8,8 +8,9 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo")(session);
 require("./config/dbConfig");
 
+const logger = require("./config/loggerConfig");
+
 const cookieParser = require("cookie-parser");
-const logger = require("morgan");
 
 const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
@@ -17,9 +18,7 @@ const articleRouter = require("./routes/list");
 
 const app = express();
 
-// view engine setup
-
-app.use(logger("dev"));
+app.use(logger.consoleLogger, logger.fileLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
