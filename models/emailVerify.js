@@ -33,7 +33,7 @@ EmailVerify.statics = {
     });
     let message = {
       from: "itech-inform.com",
-      to: "nekaktotak2@gmail.com",
+      to: obj.userEmail,
 
       subject: "Welcome to itech-inform✔",
 
