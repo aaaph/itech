@@ -14,6 +14,11 @@ const User = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  active: {
+    type: Boolean,
+    required: true,
+    default: false
   }
 });
 

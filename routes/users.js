@@ -2,6 +2,7 @@ const router = require("express").Router();
 const passport = require("passport");
 const crypto = require("crypto");
 const User = require("../models/user");
+const EmailVerify = require("../models/emailVerify");
 
 router.post(
   "/login",
@@ -24,19 +25,27 @@ router.post(
         if (err) {
           return next(err);
         }
-        return res.send({ status: "authenticated", session: req.session });
+        return res.send({
+          status: "success",
+          user: user,
+          session: req.session
+        });
       });
     })(req, res, next);
   }
 );
-
+router.get("/:id", (req, res, next) => {
+  const ObjetId = require("mongoose").Types.ObjectId;
+  console.log(typeof req.params.id);
+  User.findById(ObjetId(req.params.id)).then(user => res.json(user));
+});
 router.get("/", (req, res, next) => {
   if (req.isAuthenticated()) {
     User.findById(req.session.passport.user)
       .then(
         user => {
-          console.log(user);
-          return { status: "authenticated", user: user };
+          if (user.active) return { status: "authenticated", user: user };
+          return { status: "not verified", user: user };
         },
         err => {
           return { status: "denied", result: err };
@@ -48,8 +57,21 @@ router.get("/", (req, res, next) => {
   }
 });
 
+router.get("/verification/:hash", (req, res, next) => {
+  EmailVerify.findOneAndDelete({ hash: req.params.hash })
+    .then(emailVerify =>
+      User.findByIdAndUpdate(
+        emailVerify.userId,
+        { active: true },
+        { new: true }
+      )
+    )
+    .then(user => res.json({ status: "success", user: user }))
+    .catch(err => next(err));
+});
+
 router.post("/create", (req, res, next) => {
-  //need check
+  //need check(forgot why)
   User.findOne({ email: req.body.email })
     .then(user => (user ? user : User.findOne({ username: req.body.username })))
     .then(user =>
@@ -64,8 +86,18 @@ router.post("/create", (req, res, next) => {
               .digest("base64")
           })
             .save()
-            .then(result => {
-              return { status: "success", user: result };
+            .then(user => {
+              EmailVerify({
+                hash: crypto
+                  .createHash("sha256")
+                  .update(user.username)
+                  .digest("hex"),
+                userEmail: user.email,
+                userId: user._id
+              })
+                .save()
+                .then(emailVerify => EmailVerify.sendEmail(emailVerify));
+              res.redirect(307, "/api/users/login");
             })
             .catch(err => {
               return { status: "denied", err: err };

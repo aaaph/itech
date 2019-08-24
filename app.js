@@ -1,3 +1,7 @@
+/*
+nodemaler, joi, redis, write readme, check others libs, tests, relation dbs
+
+*/
 const createError = require("http-errors");
 const express = require("express");
 
