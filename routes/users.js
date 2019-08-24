@@ -105,6 +105,7 @@ router.post("/create", (req, res, next) => {
     )
     .then(result => res.json(result));
 });
+
 router.put(
   "/update",
   (req, res, next) => {
@@ -114,20 +115,23 @@ router.put(
     }
   },
   (req, res, next) => {
-    User.findByIdAndUpdate(req.session.passport.user, {
-      $set: {
-        username: req.body.username,
-        email: req.body.email,
-        password: crypto
-          .createHash("sha1")
-          .update(req.body.password)
-          .digest("base64")
-      }
-    })
-      .then(() => User.findById(req.session.passport.user))
+    User.findByIdAndUpdate(
+      req.session.passport.user,
+      {
+        $set: {
+          username: req.body.username,
+          email: req.body.email,
+          password: crypto
+            .createHash("sha1")
+            .update(req.body.password)
+            .digest("base64")
+        }
+      },
+      { new: true }
+    )
       .then(user => res.json({ status: "success", user: user }))
       .catch(err => {
-        throw err;
+        next(err);
       }); //res.json({ status: "denied", err: err }));
   }
 );
