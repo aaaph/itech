@@ -1,5 +1,5 @@
 /*
-nodemaler, joi, redis, write readme, check others libs, tests, relation dbs
+ joi, winston, redis, write readme, check others libs, tests, relation dbs,cors
 
 */
 const createError = require("http-errors");
@@ -21,15 +21,13 @@ const usersRouter = require("./routes/users");
 const articleRouter = require("./routes/list");
 
 const app = express();
-
-app.use(logger.consoleLogger, logger.fileLogger);
+app.use(logger.consoleLogger, logger.streamLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-
 app.use(
   session({
-    secret: "my-secret",
+    secret: process.env.secret,
     resave: false,
     saveUninitialized: false,
     store: new MongoStore({ url: process.env.DB_URL }),
