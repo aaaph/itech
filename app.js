@@ -1,5 +1,5 @@
 /*
- joi, winston, redis, write readme, check others libs, tests, relation dbs,cors
+ joi,  redis, other auth, write readme, check others libs, tests, relation dbs,cors
 
 */
 const createError = require("http-errors");

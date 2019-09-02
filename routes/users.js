@@ -3,6 +3,7 @@ const passport = require("passport");
 const crypto = require("crypto");
 const User = require("../models/user");
 const EmailVerify = require("../models/emailVerify");
+const validation = require("../config/validationConfig");
 
 router.post(
   "/login",
@@ -69,9 +70,30 @@ router.get("/verification/:hash", (req, res, next) => {
     .then(user => res.json({ status: "success", user: user }))
     .catch(err => next(err));
 });
-
+router.post("/test", (req, res, next) => {
+  res.json(
+    validation.userValidate({
+      username: req.body.username,
+      email: req.body.email,
+      password: crypto
+        .createHash("sha1")
+        .update(req.body.password)
+        .digest("base64")
+    })
+  );
+});
 router.post("/create", (req, res, next) => {
-  //need check(forgot why)
+  //rewrite it
+  validation
+    .userValidate({
+      username: req.body.username,
+      email: req.body.email,
+      password: crypto
+        .createHash("sha1")
+        .update(req.body.password)
+        .digest("base64")
+    })
+    .catch(err => next(err));
   User.findOne({ email: req.body.email })
     .then(user => (user ? user : User.findOne({ username: req.body.username })))
     .then(user =>
@@ -100,7 +122,7 @@ router.post("/create", (req, res, next) => {
               res.redirect(307, "/api/users/login");
             })
             .catch(err => {
-              return { status: "denied", err: err };
+              next(err);
             })
     )
     .then(result => res.json(result));
