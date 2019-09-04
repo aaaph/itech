@@ -1,22 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const Article = require("../models/article");
+const validation = require("../config/validationConfig");
 
 router.post("/create", (req, res, next) => {
-  let article = new Article({
-    title: req.body.title,
-    createDate: new Date(),
-    body: req.body.body,
-    theme: req.body.theme
-  });
-  article.save(err => {
-    if (err) return next(err);
-    res.json({
-      status: "created",
-      body: article,
-      date: article.createDate.toLocaleString()
-    });
-  });
+  validation
+    .articleValidate({
+      title: req.body.title,
+      createDate: new Date(),
+      body: req.body.body,
+      theme: req.body.theme
+    })
+    .then(res => new Article(res).save())
+    .then(article => res.json({ status: "created", article: article }))
+    .catch(err => next(err));
 });
 
 router.get("/", (req, res, next) => {
@@ -63,27 +60,36 @@ router.put("/:id/update", (req, res, next) => {
   const body = req.body;
   body.createDate = new Date();
 
-  Article.findByIdAndUpdate(req.params.id, { $set: body })
+  validation
+    .articleValidate(body)
+    .then(() => Article.findById(req.params.id))
     .then(article => {
       if (
         article.body == body.body &&
         article.theme == body.theme &&
         article.title == body.title
       ) {
-        res.json({ status: "same" });
+        return null;
       } else {
         return article;
       }
     })
-    .then(
-      article => {
-        return { status: "updated", body: article };
-      },
-      () => {
-        return { status: "not found" };
-      }
+    .then(result =>
+      result
+        ? Article.findByIdAndUpdate(
+            req.params.id,
+            {
+              $set: { body: body.body, theme: body.theme, title: body.title }
+            },
+            { new: true }
+          )
+        : result
     )
-    .then(result => res.json(result));
+    .then(result =>
+      result ? { status: "success", article: result } : { status: "same" }
+    )
+    .then(result => res.json(result))
+    .catch(err => next(err));
 });
 
 router.delete("/:id/delete", (req, res, next) => {

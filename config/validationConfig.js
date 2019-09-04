@@ -9,8 +9,7 @@ const userSchemaValidation = Joi.object().keys({
   email: Joi.string()
     .email({ minDomainSegment: 2 })
     .required(),
-  password: Joi.string().strip(),
-  active: Joi.boolean().default(false)
+  password: Joi.string()
 });
 
 const articleSchemaValidation = Joi.object().keys({
@@ -34,7 +33,6 @@ const userValidate = user => {
   return Joi.validate(user, userSchemaValidation);
 };
 const articleValidate = article => {
-  console.log(article);
   return Joi.validate(article, articleSchemaValidation);
 };
 module.exports = { userValidate, articleValidate };

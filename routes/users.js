@@ -70,63 +70,64 @@ router.get("/verification/:hash", (req, res, next) => {
     .then(user => res.json({ status: "success", user: user }))
     .catch(err => next(err));
 });
-router.post("/test", (req, res, next) => {
-  res.json(
-    validation.userValidate({
-      username: req.body.username,
-      email: req.body.email,
-      password: crypto
-        .createHash("sha1")
-        .update(req.body.password)
-        .digest("base64")
-    })
-  );
-});
-router.post("/create", (req, res, next) => {
-  //rewrite it
-  validation
-    .userValidate({
-      username: req.body.username,
-      email: req.body.email,
-      password: crypto
-        .createHash("sha1")
-        .update(req.body.password)
-        .digest("base64")
-    })
-    .catch(err => next(err));
-  User.findOne({ email: req.body.email })
-    .then(user => (user ? user : User.findOne({ username: req.body.username })))
-    .then(user =>
-      user
-        ? { status: "exist", user: user }
-        : User({
-            username: req.body.username,
-            email: req.body.email,
-            password: crypto
-              .createHash("sha1")
-              .update(req.body.password)
-              .digest("base64")
-          })
-            .save()
-            .then(user => {
-              EmailVerify({
-                hash: crypto
-                  .createHash("sha256")
-                  .update(user.username)
-                  .digest("hex"),
-                userEmail: user.email,
-                userId: user._id
-              })
-                .save()
-                .then(emailVerify => EmailVerify.sendEmail(emailVerify));
-              res.redirect(307, "/api/users/login");
-            })
-            .catch(err => {
-              next(err);
-            })
-    )
-    .then(result => res.json(result));
-});
+router.post(
+  "/create",
+  (req, res, next) => {
+    if (req.isAuthenticated())
+      res.send({ status: "authenticated", session: req.session });
+    else {
+      next();
+    }
+  },
+  (req, res, next) => {
+    //rewrite it
+    validation
+      .userValidate({
+        username: req.body.username,
+        email: req.body.email,
+        password: crypto
+          .createHash("sha1")
+          .update(req.body.password)
+          .digest("base64")
+      })
+      .then(() =>
+        User.findOne({ email: req.body.email })
+          .then(user =>
+            user ? user : User.findOne({ username: req.body.username })
+          )
+          .then(user =>
+            user
+              ? { status: "exist", user: user }
+              : User({
+                  username: req.body.username,
+                  email: req.body.email,
+                  password: crypto
+                    .createHash("sha1")
+                    .update(req.body.password)
+                    .digest("base64")
+                })
+                  .save()
+                  .then(user => {
+                    EmailVerify({
+                      hash: crypto
+                        .createHash("sha256")
+                        .update(user.username)
+                        .digest("hex"),
+                      userEmail: user.email,
+                      userId: user._id
+                    })
+                      .save()
+                      .then(emailVerify => EmailVerify.sendEmail(emailVerify));
+                    res.redirect(307, "/api/users/login");
+                  })
+          )
+      )
+      .then(result => res.json(result))
+      .catch(err => {
+        next(err);
+      });
+  }
+);
 
 router.put(
   "/update",
@@ -137,20 +138,32 @@ router.put(
     }
   },
   (req, res, next) => {
-    User.findByIdAndUpdate(
-      req.session.passport.user,
-      {
-        $set: {
-          username: req.body.username,
-          email: req.body.email,
-          password: crypto
-            .createHash("sha1")
-            .update(req.body.password)
-            .digest("base64")
-        }
-      },
-      { new: true }
-    )
+    const user = {
+      username: req.body.username,
+      email: req.body.email,
+      password: crypto
+        .createHash("sha1")
+        .update(req.body.password)
+        .digest("base64")
+    };
+    validation
+      .userValidate(user)
+      .then(() =>
+        User.findByIdAndUpdate(
+          req.session.passport.user,
+          {
+            $set: {
+              username: req.body.username,
+              email: req.body.email,
+              password: crypto
+                .createHash("sha1")
+                .update(req.body.password)
+                .digest("base64")
+            }
+          },
+          { new: true }
+        )
+      )
       .then(user => res.json({ status: "success", user: user }))
       .catch(err => {
         next(err);
